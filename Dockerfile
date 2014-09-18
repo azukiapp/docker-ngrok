@@ -15,4 +15,3 @@ ADD ngrok_discover /bin/ngrok_discover
 RUN chmod +x /bin/ngrok_discover
 
 CMD ["/bin/ngrok_discover"]
-# CMD ["/bin/ngrok -config=/ngrok/ngrok.yml -log=/ngrok/log/ngrok.log "]
