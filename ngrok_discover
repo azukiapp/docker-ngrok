@@ -18,6 +18,16 @@ if [ -n "$NGROK_AUTH" ]; then
   ARGS="-authtoken=$NGROK_AUTH "
 fi
 
+if [ -n "$NGROK_CONFIG" ]; then
+  ARGS="$ARGS -config=$NGROK_CONFIG "
+else
+  ARGS="$ARGS -config /ngrok/ngrok.yml "
+fi
+
+if [ -n "$NGROK_LOG" ]; then
+  ARGS="$ARGS -log $NGROK_LOG "
+fi
+
 # Set the subdomain or hostname, depending on which is set
 if [ -n "$NGROK_HOSTNAME" ] && [ -n "$NGROK_AUTH" ]; then
   ARGS="$ARGS -hostname $NGROK_HOSTNAME "
@@ -46,7 +56,7 @@ fi
 
 case "$1" in
   -h|help)  ARGS=$1 ;;
-  *)        ARGS="$ARGS -config /.ngrok -log stdout $* $FWD" ;;
+  *)        ARGS="$ARGS $* $FWD" ;;
 esac
 
 exec /bin/ngrok $ARGS
