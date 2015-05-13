@@ -7,7 +7,7 @@ Versions (tags)
 ---
 
 <versions>
-- [`latest`](https://github.com/azukiapp/docker-ngrok/blob/master/Dockerfile)
+- [`latest`](https://github.com/azukiapp/docker-ngrok/blob/master/latest/Dockerfile)
 </versions>
 
 Image content:
