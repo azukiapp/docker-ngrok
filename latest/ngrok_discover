@@ -11,7 +11,7 @@ fi
 ARGS=""
 
 if [ -n "$NGROK_AUTH" ]; then
-  ARGS="-authtoken=$NGROK_AUTH "
+  ARGS="--authtoken=$NGROK_AUTH "
 fi
 
 if [ -n "$NGROK_CONFIG" ]; then
@@ -58,4 +58,4 @@ esac
 env
 echo $ARGS
 
-exec /bin/ngrok $ARGS
+exec /bin/ngrok  http $ARGS
