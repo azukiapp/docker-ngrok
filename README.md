@@ -89,4 +89,6 @@ $ docker logs ngrok-run
 
 ## License
 
-Azuki Dockerfiles distributed under the [Apache License](https://github.com/azukiapp/dockerfiles/blob/master/LICENSE).
+Azuki Dockerfiles distributed under the [Apache License][license].
+
+[license]: ./LICENSE
