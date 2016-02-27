@@ -32,17 +32,13 @@ Example of using that image with the [azk](http://azk.io):
 systems({
   "app": {
     export_envs: {
-      APP_URL: "#{system.name}.#{azk.default_domain}:#{net.port.http}"
+      APP_URL: "http://#{system.name}.#{azk.default_domain}:#{net.port.http}"
     }
   },
   ngrok: {
     // Dependent systems
     depends: [ "app" ],
     image : { docker: "azukiapp/ngrok" },
-    // Mounts folders to assigned paths
-    mounts: {
-      '/#{system.name}/log' : path("./log"),
-    },
     scalable: { default: 0,  limit: 1 }, // disable auto start
     wait: {"retry": 20, "timeout": 1000},
     http      : {
@@ -52,8 +48,6 @@ systems({
       http : "4040"
     },
     envs      : {
-      NGROK_CONFIG    : "/ngrok/ngrok.yml",
-      NGROK_LOG       : "/#{system.name}/log/ngrok.log",
       // NGROK_SUBDOMAIN : "#{manifest.dir}",
       // NGROK_AUTH      : "",
     }
@@ -61,6 +55,7 @@ systems({
 });
 ```
 
+**Note**: protocol will be recognized and used based on your `APP_URL`.
 
 ### Usage with `docker`
 
@@ -73,8 +68,16 @@ $ docker build -t azukiapp/ngrok .
 To run the image and bind to port 4040:
 
 ```sh
-$ docker run --rm --name ngrok-run -p 4040:4040 -v "$PWD":/myapp -w /myapp -e "APP_URL=app.dev.azk.io:80" azukiapp/ngrok
+# exporting as http
+$ docker run --rm --name ngrok-run -p 4040:4040 -v "$PWD":/myapp -w /myapp -e "APP_URL=http://app.dev.azk.io:80" azukiapp/ngrok
 ```
+
+```sh
+# exporting as tcp
+$ docker run --rm --name ngrok-run -p 4040:4040 -v "$PWD":/myapp -w /myapp -e "APP_URL=tcp://app.dev.azk.io:27015" -e "NGROK_AUTH_TOKEN=12345" azukiapp/ngrok
+```
+
+**Note**: protocol will be recognized and used based on your `APP_URL`.
 
 Logs
 ---

@@ -5,45 +5,51 @@ if [ "$1" = "/bin/sh" ]; then
 fi
 
 if [ -n "$APP_URL" ]; then
-  FWD="`echo $APP_URL | sed 's|^tcp://||'`"
+  # extract the protocol
+  proto="$(echo $APP_URL | grep :// | sed -e's,^\(.*\)://.*,\1,g')"
+
+  # remove the protocol -- updated
+  url=$(echo $APP_URL | sed -e s,${proto}://,,g)
+  [ -z "$proto" ] && { proto=http; }
+
+  # extract the user (if any)
+  user="$(echo $url | grep @ | cut -d@ -f1)"
+
+  # extract the host -- updated
+  host=$(echo $url | sed -e s,$user@,,g | cut -d/ -f1)
 fi
 
-ARGS=""
-
-if [ -n "$NGROK_AUTH" ]; then
-  ARGS="--authtoken=$NGROK_AUTH "
+NGROK_AUTH_TOKEN=${NGROK_AUTH_TOKEN:-$NGROK_AUTH}
+if [ -n "$NGROK_AUTH_TOKEN" ]; then
+  ARGS="--authtoken=$NGROK_AUTH_TOKEN "
+elif [ "$proto" == "tcp" ]; then
+  echo "You must specify a auth token (NGROK_AUTH_TOKEN) when using TCP proto."
+  echo "Sign up for an authentication token at https://ngrok.com"
+  exit 1
 fi
 
-if [ -n "$NGROK_CONFIG" ]; then
-  ARGS="$ARGS -config=$NGROK_CONFIG "
-else
-  ARGS="$ARGS -config=/ngrok/ngrok.yml "
-fi
+# Set config option, defaults to /ngrok/ngrok.yml
+ARGS="$ARGS -config ${NGROK_CONFIG:-/ngrok/ngrok.yml} "
 
-if [ -n "$NGROK_LOG" ]; then
-  ARGS="$ARGS -log $NGROK_LOG "
-fi
+# Set log option, defaults to stdout
+ARGS="$ARGS -log ${NGROK_LOG:-stdout} "
 
 # Set the subdomain or hostname, depending on which is set
-if [ -n "$NGROK_HOSTNAME" ] && [ -n "$NGROK_AUTH" ]; then
+if [ -n "$NGROK_HOSTNAME" ] && [ -n "$NGROK_AUTH_TOKEN" ]; then
   ARGS="$ARGS -hostname $NGROK_HOSTNAME "
-elif [ -n "$NGROK_SUBDOMAIN" ] && [ -n "$NGROK_AUTH" ]; then
+elif [ -n "$NGROK_SUBDOMAIN" ] && [ -n "$NGROK_AUTH_TOKEN" ]; then
   ARGS="$ARGS -subdomain $NGROK_SUBDOMAIN "
 elif [ -n "$NGROK_HOSTNAME" ] || [ -n "$NGROK_SUBDOMAIN" ]; then
-  if [ -z "$NGROK_AUTH" ]; then
+  if [ -z "$NGROK_AUTH_TOKEN" ]; then
     echo "You must specify an authentication token after registering at https://ngrok.com to use custom domains."
     exit 1
   fi
 fi
 
-if [ "$NGROK_PROTOCOL" == "TCP" ]; then
-  ARGS="$ARGS -proto=tcp "
-fi
-
-if [ -n "$NGROK_USERNAME" ] && [ -n "$NGROK_PASSWORD" ] && [ -n "$NGROK_AUTH" ]; then
+if [ -n "$NGROK_USERNAME" ] && [ -n "$NGROK_PASSWORD" ] && [ -n "$NGROK_AUTH_TOKEN" ]; then
   ARGS="$ARGS -httpauth=\"$NGROK_USERNAME:$NGROK_PASSWORD\" "
 elif [ -n "$NGROK_USERNAME" ] || [ -n "$NGROK_PASSWORD" ]; then
-  if [ -z "$NGROK_AUTH" ]; then
+  if [ -z "$NGROK_AUTH_TOKEN" ]; then
     echo "You must specify a username, password, and Ngrok authentication token to use the custom HTTP authentication."
     echo "Sign up for an authentication token at https://ngrok.com"
     exit 1
@@ -52,10 +58,11 @@ fi
 
 case "$1" in
   -h|help)  ARGS=$1 ;;
-  *)        ARGS="$ARGS $* $FWD" ;;
+  *)        ARGS="$ARGS $* $url" ;;
 esac
 
-env
-echo $ARGS
+echo "* Envs started with NGROK_:"
+env | grep '^NGROK'
+echo "* ngrok running with the following args: ${proto} ${ARGS}"
 
-exec /bin/ngrok  http $ARGS
+exec /bin/ngrok $proto $ARGS
